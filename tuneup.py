@@ -10,13 +10,21 @@ __author__ = "David Guzman with help from Jordan Haagenson"
 import cProfile
 import timeit
 import pstats
-import functools
 
 
 def profile(func):
     """A cProfile decorator function that can be used to
     measure performance.
     """
+    def wrapper(*args):
+        prof = cProfile.Profile()
+        prof.enable()
+        func(*args)
+        prof.disable()
+        stat = (pstats.Stats(prof).strip_dirs().sort_stats(
+            pstats.SortKey.CUMULATIVE))
+        stat.print_stats(10)
+    return wrapper
     # Be sure to review the lesson material on decorators.
     # You need to understand how they are constructed and used.
     raise NotImplementedError("Complete this decorator function")
@@ -62,22 +70,19 @@ def optimized_find_duplicate_movies(src):
 
 
 def timeit_helper(func_name, func_param):
-    """Part A: Obtain some profiling measurements using timeit"""]
+    """Part A: Obtain some profiling measurements using timeit"""
     assert isinstance(func_name, str)
-    stmt= f'{func_name} ("{func_param}")'
-    setup= (
-        f'from {__name__} import {func_name};'
-        f'func_param = "{func_param}"'
-    )
-    t=timeit.Timer(stmt = stmt, setup = setup)
-    runs_per_repeat=3
-    num_repeats=5
-    result=t.repeat(repeat = num_repeats, number = runs_per_repeat)
-    time_cost=min([(x / runs_per_repeat) for x in result])
+    stmt = f"{func_name}('{func_param}')"
+    setup = f"from {__name__} import {func_name}"
+    t = timeit.Timer(stmt=stmt, setup=setup)
+    runs_per_repeat = 3
+    num_repeats = 5
+    result = t.repeat(repeat=num_repeats, number=runs_per_repeat)
+    time_cost = min([(x / runs_per_repeat) for x in result])
     print(
-        f"func={func_name}  num_repeats={num_repeats}"
+        f"func={func_name}  num_repeats={num_repeats} "
         f"runs_per_repeat={runs_per_repeat} time_cost={time_cost:.3f} sec"
-        )
+    )
     return t
 
 
@@ -87,10 +92,10 @@ def main():
     # e.g. they should not be running 'timeit' on a function that is
     # already decorated with @profile
 
-    filename='movies.txt'
+    filename = 'movies.txt'
 
     print("--- Before optimization ---")
-    result=find_duplicate_movies(filename)
+    result = find_duplicate_movies(filename)
     print(f'Found {len(result)} duplicate movies:')
     print('\n'.join(result))
 
